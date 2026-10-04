@@ -1,0 +1,12 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Umi – benötigte Python-Bibliotheken (Python 3.13, auch 3.10+ kompatibel)
+#
+#  Installation:   pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────────────────────
+
+numpy>=1.26              # Audio-Verarbeitung (RMS-Pegel, PCM-Umrechnung, Signaltöne)
+sounddevice>=0.5.0       # Mikrofon-Aufnahme & Wiedergabe (PortAudio, liefert Wheels für Windows)
+soundfile>=0.12.1        # Dekodiert die MP3-Antworten von Edge TTS zum Abspielen
+SpeechRecognition>=3.10  # Spracherkennung (Sprache → Text) über die Google Web Speech API
+edge-tts>=6.1            # Natürliche Microsoft-Sprachausgabe (Text → Sprache, online)
+pyttsx3>=2.90            # Optional: Windows-SAPI-Stimmen als Offline-Fallback
