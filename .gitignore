@@ -1,0 +1,7 @@
+# Umi-Einstellungen werden lokal erzeugt und gehören nicht ins Repository
+umi_einstellungen.json
+
+# Python-Artefakte
+__pycache__/
+*.pyc
+.venv/
