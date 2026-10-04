@@ -37,8 +37,11 @@ unter Windows, der **komplett in einer einzigen Python-Datei** (`umi_assistent.p
 | 💬 **Chat-Verlauf** | Moderne, dunkle Chat-Oberfläche mit Sprechblasen |
 | 🚦 **Statusanzeige** | „Bereit“, „Hört zu …“, „Denkt nach …“, „Spricht …“ (mit Puls-Animation) |
 | ⚙️ **Einstellungen** | Mikrofon & Lautsprecher wählbar, Empfindlichkeit, Stimme, Tempo, Lautstärke, Erkennungssprache, Aktivierungswort, Online-KI |
-| 🧠 **Fähigkeiten offline** | Uhrzeit, Datum, Taschenrechner, Witze, Würfeln/Münzwurf, Wetter (Open-Meteo, ohne API-Key), Timer/Erinnerungen, Hilfe |
+| 🧠 **Fähigkeiten offline** | Uhrzeit, Datum, Taschenrechner, Witze, Würfeln/Münzwurf, Wetter (Open-Meteo, ohne API-Key), Timer/Erinnerungen, Lautstärke, Websites öffnen, Hilfe |
 | 🌐 **Online-KI (optional)** | Freie Fragen an jede **OpenAI-kompatible** Chat-API (OpenAI, **Ollama lokal**, LM Studio, …) |
+| 🔉 **Lautstärke per Sprache** | „Mach lauter“, „Mach leiser“, „Lautstärke 50“, „Stumm“ |
+| 🌍 **Websites öffnen** | „Öffne YouTube“, „Öffne spiegel.de“ – Unbekanntes wird zur Google-Suche |
+| 🔁 **Wiederholen** | „Wiederhole das“ / „Wie bitte?“ wiederholt die letzte Antwort |
 | 🧩 **Erweiterbar** | Eigene Fähigkeiten in wenigen Zeilen ergänzen (Klasse `Skill`) |
 | 🛡 **Fehlerbehandlung** | Verständliche Meldungen bei fehlendem Mikrofon, ohne Internet, falschen Einstellungen usw. |
 
@@ -46,9 +49,17 @@ unter Windows, der **komplett in einer einzigen Python-Datei** (`umi_assistent.p
 
 ## 📦 Installation (Windows, Python 3.13)
 
+### ⚡ Schnellweg (empfohlen)
+
 1. **Python 3.13** installieren: <https://www.python.org/downloads/>
    → im Installer unbedingt **„Add python.exe to PATH“** anhaken!
-2. Eingabeaufforderung (cmd) im Projektordner öffnen und installieren:
+2. Doppelklick auf **`Umi_Installieren.bat`** (legt eine saubere
+   Python-Umgebung an und installiert alles automatisch).
+3. Danach Umi jederzeit per Doppelklick auf **`Umi_Starten.bat`** starten.
+
+### Manueller Weg
+
+Alternativ in der Eingabeaufforderung (cmd) im Projektordner:
 
    ```bat
    pip install -r requirements.txt
@@ -89,6 +100,7 @@ python umi_assistent.py
 
 Das war's – Umi öffnet das Fenster, lauscht auf **„Hey Umi“** und nimmt zusätzlich
 Nachrichten über die **🎙-Taste** oder die **Tastatur** entgegen.
+*(Wer `Umi_Installieren.bat` genutzt hat, startet stattdessen einfach `Umi_Starten.bat`.)*
 
 **Nützliche Startoptionen:**
 
@@ -188,5 +200,7 @@ die Erkennung selbst ein Online-Dienst.
 |---|---|
 | `umi_assistent.py` | **Das komplette Programm** (eine Datei, gut kommentiert) |
 | `requirements.txt` | Benötigte Python-Bibliotheken |
+| `Umi_Installieren.bat` | Einmalige Installation per Doppelklick (Windows) |
+| `Umi_Starten.bat` | Umi per Doppelklick starten (Windows) |
 | `README_Umi.md` | Diese Anleitung |
 | `umi_einstellungen.json` | Wird beim ersten Start automatisch angelegt |

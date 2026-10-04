@@ -74,6 +74,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 
 # Tkinter gehört zur Standardbibliothek; falls es fehlt (z. B. einige
 # Linux-Distributionen ohne python3-tk), läuft wenigstens der Selbsttest.
@@ -597,6 +598,101 @@ class ZufallsSkill(Skill):
         return f"Der Würfel zeigt: {random.randint(1, 6)}."
 
 
+class WiederholSkill(Skill):
+    """Wiederholt die letzte Antwort: „Wiederhole das“, „Wie bitte?“."""
+
+    name = "Wiederholen"
+
+    def match(self, text):
+        return re.search(r"\b(wiederhol\w*|wie bitte|was hast du gesagt|"
+                         r"sag (das|es) noch(einmal| mal)?)\b", text) is not None
+
+    def handle(self, text, umi):
+        if umi.letzte_antwort:
+            return umi.letzte_antwort
+        return "Ich habe noch nichts gesagt – frag mich einfach etwas!"
+
+
+class LautstaerkeSkill(Skill):
+    """
+    Sprachausgabe lauter/leiser stellen: „Mach lauter“, „Mach leiser“,
+    „Lautstärke 50“, „Stumm schalten“.
+    """
+
+    name = "Lautstärke"
+
+    def match(self, text):
+        return re.search(r"\b(lauter|leiser|lautstärke|stumm)\b",
+                         text) is not None
+
+    def handle(self, text, umi):
+        aktuell = int(umi.konfig.get("sprache_tts", "lautstaerke") or 80)
+        if "stumm" in text:
+            neu = 0
+        elif "lauter" in text:
+            neu = min(100, aktuell + 15)
+        elif "leiser" in text:
+            neu = max(0, aktuell - 15)
+        else:
+            z = re.search(r"\b(\d{1,3})\b", text)
+            if z:
+                neu = min(100, max(0, int(z.group(1))))
+            else:
+                return ("Sage zum Beispiel „mach lauter“, „mach leiser“, "
+                        "„stumm“ oder „Lautstärke 50“.")
+        umi.konfig.setze("sprache_tts", "lautstaerke", neu)
+        umi.konfig.speichern()
+        if neu == 0:
+            return ("Okay, ich schweige. Sage „Lautstärke 50“, um mich wieder "
+                    "zu hören.")
+        return f"Die Lautstärke ist jetzt bei {neu} Prozent."
+
+
+class WebsiteSkill(Skill):
+    """
+    Öffnet Websites im Standardbrowser: „Öffne YouTube“, „Öffne spiegel.de“.
+    Unbekannte Begriffe werden als Google-Suche geöffnet.
+    """
+
+    name = "Websites öffnen"
+    _seiten = {
+        "youtube": "https://www.youtube.com",
+        "google": "https://www.google.com",
+        "wikipedia": "https://de.wikipedia.org",
+        "github": "https://github.com",
+        "gmx": "https://www.gmx.net",
+        "web.de": "https://web.de",
+        "amazon": "https://www.amazon.de",
+        "spiegel": "https://www.spiegel.de",
+        "tagesschau": "https://www.tagesschau.de",
+        "kicker": "https://www.kicker.de",
+        "wetter": "https://www.wetter.de",
+    }
+    _schluessel = re.compile(r".*?(?:öffne|oeffne|mach auf|aufmachen)\s*"
+                             r"(?:bitte\s*)?(?:die |den |das |mal )?")
+
+    def match(self, text):
+        return re.search(r"\b(öffne|oeffne|mach auf|aufmachen)\b",
+                         text) is not None
+
+    def handle(self, text, umi):
+        ziel = self._schluessel.sub("", text, count=1).strip()
+        if not ziel:
+            return ("Welche Website soll ich öffnen? Sag zum Beispiel "
+                    "„öffne YouTube“.")
+        for name, url in self._seiten.items():
+            if name in ziel:
+                webbrowser.open(url)
+                return f"Ich öffne {name.title()} im Browser."
+        d = re.search(r"([a-z0-9\-]+)\.(de|com|net|org|io|eu|at|ch)(?!\w)", ziel)
+        if d:
+            webbrowser.open(f"https://www.{d.group(1)}.{d.group(2)}")
+            return f"Ich öffne {d.group(1)}.{d.group(2)} im Browser."
+        suche = urllib.parse.quote_plus(ziel)
+        webbrowser.open(f"https://www.google.com/search?q={suche}")
+        return f"Ich suche nach „{ziel}“ im Browser."
+
+
 class WetterSkill(Skill):
     """
     Aktuelles Wetter über die kostenlose Open-Meteo-API (kein API-Schlüssel
@@ -730,6 +826,7 @@ class HilfeSkill(Skill):
                   "• „Wie spät ist es?“ / „Welches Datum haben wir?“",
                   "• „Rechne 12,5 mal 4“ / „Wurzel aus 144“",
                   "• „Erzähl mir einen Witz“ / „Wirf eine Münze“ / „Würfle“",
+                  "• „Mach lauter“ / „Lautstärke 50“ / „Öffne YouTube“",
                   "• „Wie wird das Wetter in Hamburg?“",
                   "• „Stelle einen Timer auf 5 Minuten“",
                   "• Freie Fragen – wenn du unter Einstellungen → KI eine "
@@ -783,15 +880,27 @@ class UmiGehirn:
         self._timer: set[threading.Timer] = set()
         self._erinnerungs_kanal = None           # wird von main() gesetzt
         self.wake_callback = None                # wird von main() gesetzt
+        self.letzte_antwort = ""                 # für „Wiederhole das“
         # Liste der Fähigkeiten – hier kannst du eigene Skills ergänzen!
         self.skills: list[Skill] = [
-            AbschiedSkill(), HilfeSkill(), ZeitSkill(), DatumSkill(),
-            RechenSkill(), WitzSkill(), ZufallsSkill(), WetterSkill(),
+            AbschiedSkill(), HilfeSkill(), WiederholSkill(), ZeitSkill(),
+            DatumSkill(), RechenSkill(), WitzSkill(), ZufallsSkill(),
+            LautstaerkeSkill(), WebsiteSkill(), WetterSkill(),
             TimerSkill(), BegruessungsSkill(),
         ]
 
     # ── Zentrale Antwort-Funktion ────────────────────────────────────────
     def antworten(self, text: str, quelle: str = "text") -> str:
+        """
+        Ermittelt die Antwort und merkt sie sich als letzte Antwort,
+        damit „Wiederhole das“ funktioniert.
+        """
+        antwort = self._antwort_ermitteln(text, quelle)
+        if antwort and "wiederhol" not in normalisiere(text or ""):
+            self.letzte_antwort = antwort
+        return antwort
+
+    def _antwort_ermitteln(self, text: str, quelle: str = "text") -> str:
         text = (text or "").strip()
         if not text:
             return "Ich habe leider nichts gehört. Wie kann ich helfen?"
@@ -1035,7 +1144,7 @@ class Sprecher:
             return bytes(buf)
 
         async def mit_timeout():
-            if hasattr(asyncio, "timeout"):        # Python 3.11+
+            if hasattr(asyncio, "timeout"):        # 3.11+, sonst ohne Timeout  # novm
                 async with asyncio.timeout(30):
                     return await erzeugen()
             return await erzeugen()
@@ -2419,7 +2528,7 @@ def selbsttest() -> int:
     gehirn.setze_erinnerungs_kanal(lambda text: print(f"      [Erinnerung] {text}"))
     fragen = ["hallo umi", "wie spät ist es?", "welches datum haben wir?",
               "rechne 12,5 mal 4", "was ist 2 hoch 10", "wurzel aus 144",
-              "erzähl mir einen witz", "würfle", "hilfe"]
+              "erzähl mir einen witz", "würfle", "hilfe", "wiederhole das"]
     for frage in fragen:
         antwort = gehirn.antworten(frage).replace("\n", " ")
         print(f"      Du : {frage}\n      Umi: {antwort[:90]}")
